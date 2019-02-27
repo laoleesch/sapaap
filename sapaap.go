@@ -32,7 +32,7 @@ func main() {
 		return
 	}
 
-	// check filename
+	// check filename, check if it pipe
 	inf := os.Stdin
 	if flag.Arg(0) != "" {
 		inf, err = os.Open(flag.Arg(0))

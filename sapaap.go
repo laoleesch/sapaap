@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/binary"
 	"flag"
@@ -21,8 +22,6 @@ func main() {
 	// parse arguments and set variables
 	endianF := flag.Bool("BE", false, "set if audit file from BigEndian system (AIX, HP-UX, Solaris, etc)")
 	nucF := flag.Bool("NUC", false, "set if SAP system is NON-UNICODE")
-	// inputF := flag.String("i", "", "set input file name")
-	// outputF := flag.String("o", "", "set output file name")
 	appendStringF := flag.String("a", "", "string to append to every row in result data\nexample: \"$HOST,$SAPSYSTEM\" ")
 	printFormatHelpF := flag.Bool("describe", false, "get audit file format description")
 	flag.Parse()
@@ -32,7 +31,13 @@ func main() {
 		return
 	}
 
-	// check filename, check if it pipe
+	// buffer size
+	var buflen int = 400
+	if *nucF {
+		buflen = 200
+	}
+
+	// check and set input
 	inf := os.Stdin
 	if flag.Arg(0) != "" {
 		inf, err = os.Open(flag.Arg(0))
@@ -40,44 +45,58 @@ func main() {
 			log.Printf("ERROR: Can't open file: %s\n", flag.Arg(0))
 			return
 		}
+		defer inf.Close()
 	}
-	defer inf.Close()
 
-	// buffer size
-	var buflen int64 = 400
-	if *nucF {
-		buflen = 200
-	}
-	buffer := make([]byte, buflen)
-
-	var str string
-	var i int64 = 0
-	for ; ; i++ {
-		n, err := inf.ReadAt(buffer, buflen*i)
-		if err != nil && err != io.EOF {
-			panic(err)
-		} else if err == io.EOF {
-			if n != 0 {
-				log.Printf("ERROR: The last string has wrong byte length (not %v): %v\n", buflen, n)
+	var buffer []byte
+	i := 1
+	reader := bufio.NewReader(inf)
+	for {
+		// clean buffer and read record by bytes
+		buffer = nil
+		j := 0
+		for {
+			if j >= buflen {
+				break
 			}
-			break
+			ibyte, err := reader.ReadByte()
+			if err != nil && err != io.EOF {
+				panic(err)
+			} else if err == io.EOF {
+				if j != 0 {
+					log.Printf("ERROR: The last string has wrong byte length (not %v): %v\n", buflen, j)
+				}
+				return
+			}
+			buffer = append(buffer, ibyte)
+			j++
+		}
+
+		//check record lenght
+		if len(buffer) != buflen {
+			log.Printf("ERROR: The string #%v has wrong byte length (not %v): %v\n", i, buflen, len(buffer))
+			return
 		}
 		// decode to utf-8 runes
 		runes, err := DecodeUtf16(buffer, *endianF)
 		if err != nil {
-			log.Printf("ERROR: Can't decode string #%v\n%v", i+1, err)
+			log.Printf("ERROR: Can't decode string #%v\n%v", i, err)
 		}
 		// parse and convert to hive csv
-		result, err := parseAndConvertToHiveCSV(runes)
+		record, err := parseAndConvertToHiveCSV(runes)
 		if err != nil {
-			log.Printf("ERROR: Can't parse and convert string #%v %q\n%v", i+1, str, err)
+			log.Printf("ERROR: Can't parse and convert string #%v %q\n%v", i, record, err)
 		}
 		// append string
 		if *appendStringF != "" {
-			result += "," + strings.Trim(*appendStringF, "\"")
+			record += "," + strings.Trim(*appendStringF, "\"")
 		}
+
 		// string result output
-		fmt.Println(result)
+		fmt.Println(record)
+
+		//inc string number
+		i++
 	}
 
 }

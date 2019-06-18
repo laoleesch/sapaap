@@ -22,6 +22,7 @@ func main() {
 	// parse arguments and set variables
 	endianF := flag.Bool("BE", false, "set if audit file from BigEndian system (AIX, HP-UX, Solaris, etc)")
 	nucF := flag.Bool("NUC", false, "set if SAP system is NON-UNICODE")
+	delimiterF := flag.String("d", ",", "delimiter to separate values in output records (CSV)")
 	appendStringF := flag.String("a", "", "string to append to every row in result data\nexample: \"$HOST,$SAPSYSTEM\" ")
 	printFormatHelpF := flag.Bool("describe", false, "get audit file format description")
 	flag.Parse()
@@ -31,7 +32,7 @@ func main() {
 		return
 	}
 
-	// buffer size
+	// buffer size UC/NUC
 	var buflen int = 400
 	if *nucF {
 		buflen = 200
@@ -83,7 +84,7 @@ func main() {
 			log.Printf("ERROR: Can't decode string #%v\n%v", i, err)
 		}
 		// parse and convert to hive csv
-		record, err := parseAndConvertToHiveCSV(runes)
+		record, err := parseAndConvert(runes, *delimiterF)
 		if err != nil {
 			log.Printf("ERROR: Can't parse and convert string #%v %q\n%v", i, record, err)
 		}
@@ -103,7 +104,7 @@ func main() {
 
 func customCmdHelp() {
 	fmt.Fprintf(flag.CommandLine.Output(), "\n")
-	fmt.Fprintf(flag.CommandLine.Output(), "Use %s [options] <filename>\n\n", os.Args[0])
+	fmt.Fprintf(flag.CommandLine.Output(), "Use %s [options] <filename>\nor in pipe <output> | %s [options]\n", os.Args[0], os.Args[0])
 	fmt.Fprintf(flag.CommandLine.Output(), "options:\n")
 	flag.PrintDefaults()
 	fmt.Fprintf(flag.CommandLine.Output(), "\n")
@@ -136,11 +137,10 @@ func printFormatHelp() {
 	fmt.Fprintf(flag.CommandLine.Output(), "																				\n")
 	fmt.Fprintf(flag.CommandLine.Output(), " The record length is 200 char symbols.                                         \n")
 	fmt.Fprintf(flag.CommandLine.Output(), " And 200 bytes in NUC system.		                                            \n")
-	fmt.Fprintf(flag.CommandLine.Output(), " In case of UINCODE system - 400 bytes because of 2 bytes per 1 symbol        \n\n")
+	fmt.Fprintf(flag.CommandLine.Output(), " In case of UINCODE system - 400 bytes because of 2 bytes per 1 symbol          \n")
 	fmt.Fprintf(flag.CommandLine.Output(), "																				\n")
 	fmt.Fprintf(flag.CommandLine.Output(), "    																			\n")
 	fmt.Fprintf(flag.CommandLine.Output(), " Output CSV format:                                                             \n")
-	fmt.Fprintf(flag.CommandLine.Output(), " delimeter \",\"                                                                \n")
 	fmt.Fprintf(flag.CommandLine.Output(), " Pos   Size    Field name      Description                                      \n")
 	fmt.Fprintf(flag.CommandLine.Output(), " ----------------------------------------                                       \n")
 	fmt.Fprintf(flag.CommandLine.Output(), " 1     [10]    Date            YYYY-MM-DD ISO8601                               \n")
@@ -156,7 +156,7 @@ func printFormatHelp() {
 	fmt.Fprintf(flag.CommandLine.Output(), " 11    [1]     SessionID                                                        \n")
 	fmt.Fprintf(flag.CommandLine.Output(), " 12    [0-64]  Parameters      most of messages has parameters, so here they are\n")
 	fmt.Fprintf(flag.CommandLine.Output(), " 13    [0-20]  Terminal        host name user's PC                              \n")
-	fmt.Fprintf(flag.CommandLine.Output(), " 14... [...]   <append>        custom append string                             \n")
+	fmt.Fprintf(flag.CommandLine.Output(), " 14... [...]   <append>        custom appended string                           \n")
 
 }
 
@@ -176,7 +176,7 @@ func DecodeUtf16(b []byte, endianF bool) ([]rune, error) {
 	return utf16.Decode(ints), nil
 }
 
-func parseAndConvertToHiveCSV(runes []rune) (string, error) {
+func parseAndConvert(runes []rune, d string) (string, error) {
 	// remove:			version, sap_pid_hex and unknown.
 	// add/convert:		date as hive date, date&time as hive timestamp
 	// trim:			username, transaction, report, parameters and terminal
@@ -231,6 +231,5 @@ func parseAndConvertToHiveCSV(runes []rune) (string, error) {
 	// terminal
 	result = append(result, strings.Trim(string(runes[180:]), " "))
 
-	return strings.Join(result, ","), nil
-	// return string(runes), nil
+	return strings.Join(result, d), nil
 }

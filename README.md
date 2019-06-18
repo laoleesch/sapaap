@@ -1,7 +1,7 @@
 # sapaap
 **S**AP **A**bap **A**udit logs **P**arser and converter
 
-This is simple console tool for parsing SAP abap audit logs and converting them into readable CSV format.
+This is a simple console tool for parsing SAP abap audit logs and converting them into readable CSV format.
 
 ## Usage
 Just read --help
@@ -73,7 +73,7 @@ options:
 ## Build and use
 Try `go get` / `go install`
 
-To build linux version on Mac/Win I'd like to use [Docker](https://www.docker.com/) and [source-to-image](https://github.com/openshift/source-to-image):
+To build linux version on Mac/Win I like to use [Docker](https://www.docker.com/) and [source-to-image](https://github.com/openshift/source-to-image):
 
 	$ s2i build $GOPATH/src/github.com/laoleesch/sapaap centos/go-toolset-7-centos7:latest sapaap
     $ docker run --entrypoint cat sapaap /opt/app-root/gobinary > ./sapaap-centos7

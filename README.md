@@ -74,8 +74,9 @@ options:
 Try `go get` / `go install`
 
 To build linux version on Mac/Win I'd like to use [Docker](https://www.docker.com/) and [source-to-image](https://github.com/openshift/source-to-image):
-$ s2i build $GOPATH/src/github.com/laoleesch/sapaap centos/go-toolset-7-centos7:latest sapaap
-$ docker run --entrypoint cat sapaap /opt/app-root/gobinary > ./sapaap-centos7
+
+	$ s2i build $GOPATH/src/github.com/laoleesch/sapaap centos/go-toolset-7-centos7:latest sapaap
+    $ docker run --entrypoint cat sapaap /opt/app-root/gobinary > ./sapaap-centos7
 
 ## License
 I'll be happy if it help you :)

@@ -5,7 +5,7 @@ This is simple console tool for parsing SAP abap audit logs and converting them 
 
 ## Usage
 Just read --help
-
+```
 Use sapaap [options] <filename>
 or in pipe <output> | sapaap [options]
 options:
@@ -20,8 +20,9 @@ options:
     	delimiter to separate values in output records (CSV) (default ",")
   -describe
     	get audit file format description
-
+```
 ## Output format
+```
  Audit file format:                                                             
  Pos   Size    Field name      Description                                      
  ----------------------------------------                                       
@@ -68,11 +69,11 @@ options:
  12    [0-64]  Parameters      most of messages has parameters, so here they are
  13    [0-20]  Terminal        host name user's PC                              
  14... [...]   <append>        custom appended string                           
-
+```
 ## Build and use
-Try **go get / go install**
+Try `go get` / `go install`
 
-To build linux version on Mac/Win I'd like to use [Docker] and [source-to-image](https://github.com/openshift/source-to-image):
+To build linux version on Mac/Win I'd like to use [Docker](https://www.docker.com/) and [source-to-image](https://github.com/openshift/source-to-image):
 $ s2i build $GOPATH/src/github.com/laoleesch/sapaap centos/go-toolset-7-centos7:latest sapaap
 $ docker run --entrypoint cat sapaap /opt/app-root/gobinary > ./sapaap-centos7
 

@@ -71,11 +71,11 @@ options:
  14... [...]   <append>        custom appended string                           
 ```
 ## Build and use
-Try `go get` / `go install`
+Try `go get github.com/laoleesch/sapaap` / `go install github.com/laoleesch/sapaap`
 
 For linux try run:
 
-	$ go get github.com/laoleesch/sapaap
 	$ GOOS=linux GOARCH=amd64 go build -o sapaap
 
 ## License
+MIT
